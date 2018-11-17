@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import br.com.alura.forum.controller.request.CreateResponseAnswer;
 import br.com.alura.forum.entities.Answer;
 import br.com.alura.forum.entities.Question;
+import br.com.alura.forum.exception.AnswerNotFoundException;
 import br.com.alura.forum.exception.QuestionNotFoundException;
 import br.com.alura.forum.repositories.QuestionRepository;
 
@@ -50,5 +51,19 @@ public class QuestionService {
 	
 	public List<Question> findByUser(UUID id){
 		return questionRepository.findByUser(id);
+	}
+	
+	@Transactional
+	public Question answerSolved(UUID questionId, UUID answerId){
+		Question question = this.questionRepository.findById(questionId).orElseThrow(() -> new QuestionNotFoundException());
+	
+		Answer answer = question.getAnswers().stream()
+		.filter(a -> a.getId().equals(answerId))
+		.findFirst()
+		.orElseThrow(() -> new AnswerNotFoundException());
+		
+		answer.setSolved(true);
+		
+		return question;
 	}
 }

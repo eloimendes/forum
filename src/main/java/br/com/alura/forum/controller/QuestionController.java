@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +22,7 @@ import br.com.alura.forum.controller.request.CreateQuestionRequest;
 import br.com.alura.forum.controller.request.CreateResponseAnswer;
 import br.com.alura.forum.entities.Answer;
 import br.com.alura.forum.entities.Question;
+import br.com.alura.forum.exception.AnswerNotFoundException;
 import br.com.alura.forum.exception.QuestionNotFoundException;
 import br.com.alura.forum.repositories.AnswerRepository;
 import br.com.alura.forum.services.Course;
@@ -89,6 +91,17 @@ public class QuestionController {
 		return ResponseEntity.ok().body(buildQuestions(questions));
 	}
 	
+	@PutMapping("/{questionId}/answers/{answerId}") 
+	public ResponseEntity<QuestionView> answerSolved(@PathVariable UUID questionId, @PathVariable UUID answerId) {
+		try{
+			Question question = questionService.answerSolved(questionId, answerId);
+			
+			return ResponseEntity.ok().body(buildQuestion(question));
+		}catch(QuestionNotFoundException | AnswerNotFoundException e){
+			return ResponseEntity.notFound().build();
+		}
+	}
+	
 	private QuestionView buildQuestion(Question question) {
 		QuestionView view = new QuestionView();
 		view.setId(question.getId());
@@ -104,7 +117,7 @@ public class QuestionController {
 
 	private String courseName(UUID course) {
 		Course byId = courseService.getById(course);
-		return byId.getNome();
+		return byId.getName();
 	}
 
 	private String userName(UUID user) {
