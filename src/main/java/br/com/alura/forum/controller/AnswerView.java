@@ -9,6 +9,8 @@ public class AnswerView {
 	private String answer;
 
 	private UUID user;
+	
+	private String userName;
 
 	private Instant instant;
 
@@ -36,6 +38,14 @@ public class AnswerView {
 
 	public void setUser(UUID user) {
 		this.user = user;
+	}
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
 	}
 
 	public Instant getInstant() {

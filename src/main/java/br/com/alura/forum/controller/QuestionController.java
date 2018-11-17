@@ -6,8 +6,6 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.transaction.Transactional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,20 +20,26 @@ import br.com.alura.forum.controller.request.CreateQuestionRequest;
 import br.com.alura.forum.controller.request.CreateResponseAnswer;
 import br.com.alura.forum.entities.Answer;
 import br.com.alura.forum.entities.Question;
+import br.com.alura.forum.exception.QuestionNotFoundException;
 import br.com.alura.forum.repositories.AnswerRepository;
-import br.com.alura.forum.repositories.QuestionRepository;
+import br.com.alura.forum.services.QuestionService;
+import br.com.alura.forum.services.UserService;
+import br.com.alura.forum.services.UserVO;
 
 @RestController
 @RequestMapping(value="/api/questions")
 public class QuestionController {
 
-	private final QuestionRepository questionRepository;
+	private final QuestionService questionService;
 	private final AnswerRepository answerRepository;
+	private final UserService userService;
 	
 	@Autowired
-	public QuestionController(QuestionRepository questionRepository, AnswerRepository answerRepository) {
-		this.questionRepository = questionRepository;
+	public QuestionController(QuestionService questionService, AnswerRepository answerRepository,
+			UserService userService) {
+		this.questionService = questionService;
 		this.answerRepository = answerRepository;
+		this.userService = userService;
 	}
 	
 	@PostMapping
@@ -47,36 +51,28 @@ public class QuestionController {
 		question.setTitle(request.getTitle());
 		question.setUser(request.getUser());
 		
-		Question saved = this.questionRepository.save(question);
+		Question saved = this.questionService.save(question);
 		return new ResponseEntity(buildQuestion(saved), HttpStatus.CREATED);
 		
 	}
 	
 	@PostMapping("{id}") 
-	@Transactional
 	public ResponseEntity<?> reponse(@PathVariable UUID id, @RequestBody CreateResponseAnswer request) {
 		
-		System.out.println(id);
-		Optional<Question> optional = this.questionRepository.findById(id);
+		try{
+			Question question = questionService.answer(id, request);
+			
+			return ResponseEntity.ok().body(buildQuestion(question));
 		
-		optional.ifPresent(question -> {
-			
-			Answer answer = new Answer();
-			answer.setAnswer(request.getAnswer());
-			answer.setUser(request.getUser());
-			answer.setInstant(Instant.now());
-			
-			question.addAnswer(answer);
-			
-		});	
-		
-		return optional.map(q -> ResponseEntity.ok().body(buildQuestion(q))).orElseGet(ResponseEntity.notFound()::build);
+		}catch(QuestionNotFoundException e){
+			return ResponseEntity.notFound().build();
+		}
 	}
 	
 	@GetMapping("{id}") 
 	public ResponseEntity<?> findById(@PathVariable UUID id) {
 		
-		Optional<Question> optional = this.questionRepository.findById(id);
+		Optional<Question> optional = this.questionService.findById(id);
 		
 		return optional.map(q -> ResponseEntity.ok().body(buildQuestion(q))).orElseGet(ResponseEntity.notFound()::build);
 	}
@@ -87,8 +83,15 @@ public class QuestionController {
 		view.setCourse(question.getCourse());
 		view.setInstant(question.getInstant());
 		view.setTitle(question.getTitle());
+		view.setUser(question.getUser());
+		view.setUserName(userName(question.getUser()));
 		view.setAnswers(buildAnswers(question.getAnswers()));
 		return view;
+	}
+
+	private String userName(UUID user) {
+		UserVO userById = userService.getUserById(user);
+		return userById.getNome();
 	}
 
 	private Collection<AnswerView> buildAnswers(Collection<Answer> answers) {
@@ -100,6 +103,7 @@ public class QuestionController {
 			answerView.setInstant(answer.getInstant());
 			answerView.setSolved(answer.isSolved());
 			answerView.setUser(answer.getUser());
+			answerView.setUserName(userName(answer.getUser()));
 			v.add(answerView);
 		}
 		return v;
@@ -108,7 +112,7 @@ public class QuestionController {
 	@GetMapping
 	public ResponseEntity<Collection<Question>> list() {
 		
-		Iterable<Question> all = this.questionRepository.findAll();
+		Iterable<Question> all = this.questionService.findAll();
 		
 		Collection<QuestionView> questions = buildQuestions(all);
 		

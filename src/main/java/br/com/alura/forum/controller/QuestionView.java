@@ -18,6 +18,8 @@ public class QuestionView {
 	
 	private UUID user;
 	
+	private String userName;
+	
 	private Instant instant;
 	
 	private UUID course;
@@ -46,6 +48,14 @@ public class QuestionView {
 
 	public void setUser(UUID user) {
 		this.user = user;
+	}
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
 	}
 
 	public Instant getInstant() {

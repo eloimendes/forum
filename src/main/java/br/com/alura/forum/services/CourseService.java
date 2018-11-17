@@ -14,7 +14,7 @@ public class CourseService {
 
 	@Autowired
 	public CourseService(RestTemplate restTemṕlate) {
-		this.restTemṕlate = restTemṕlate;		
+		this.restTemṕlate = restTemṕlate;
 	}
 	
 	
