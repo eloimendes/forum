@@ -47,4 +47,8 @@ public class QuestionService {
 
 		return question;
 	}
+	
+	public List<Question> findByUser(UUID id){
+		return questionRepository.findByUser(id);
+	}
 }

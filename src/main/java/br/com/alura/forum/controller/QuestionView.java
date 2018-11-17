@@ -23,6 +23,7 @@ public class QuestionView {
 	private Instant instant;
 	
 	private UUID course;
+	private String courseName;
 	
 	private Collection<AnswerView> answers = new ArrayList<>();
 
@@ -72,6 +73,14 @@ public class QuestionView {
 
 	public void setCourse(UUID course) {
 		this.course = course;
+	}
+
+	public String getCourseName() {
+		return courseName;
+	}
+
+	public void setCourseName(String courseName) {
+		this.courseName = courseName;
 	}
 
 	public Collection<AnswerView> getAnswers() {

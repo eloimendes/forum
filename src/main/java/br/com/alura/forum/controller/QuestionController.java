@@ -3,6 +3,7 @@ package br.com.alura.forum.controller;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +23,8 @@ import br.com.alura.forum.entities.Answer;
 import br.com.alura.forum.entities.Question;
 import br.com.alura.forum.exception.QuestionNotFoundException;
 import br.com.alura.forum.repositories.AnswerRepository;
+import br.com.alura.forum.services.Course;
+import br.com.alura.forum.services.CourseService;
 import br.com.alura.forum.services.QuestionService;
 import br.com.alura.forum.services.UserService;
 import br.com.alura.forum.services.UserVO;
@@ -31,14 +34,15 @@ import br.com.alura.forum.services.UserVO;
 public class QuestionController {
 
 	private final QuestionService questionService;
-	private final AnswerRepository answerRepository;
 	private final UserService userService;
+	private final CourseService courseService;
 	
 	@Autowired
-	public QuestionController(QuestionService questionService, AnswerRepository answerRepository,
+	public QuestionController(QuestionService questionService, 
+			CourseService courseService,
 			UserService userService) {
 		this.questionService = questionService;
-		this.answerRepository = answerRepository;
+		this.courseService = courseService;
 		this.userService = userService;
 	}
 	
@@ -77,16 +81,30 @@ public class QuestionController {
 		return optional.map(q -> ResponseEntity.ok().body(buildQuestion(q))).orElseGet(ResponseEntity.notFound()::build);
 	}
 	
+	@GetMapping("/users/{id}") 
+	public ResponseEntity<?> findByUserId(@PathVariable UUID id) {
+		
+		List<Question> questions = this.questionService.findByUser(id);
+		
+		return ResponseEntity.ok().body(buildQuestions(questions));
+	}
+	
 	private QuestionView buildQuestion(Question question) {
 		QuestionView view = new QuestionView();
 		view.setId(question.getId());
 		view.setCourse(question.getCourse());
+		view.setCourseName(courseName(question.getCourse()));
 		view.setInstant(question.getInstant());
 		view.setTitle(question.getTitle());
 		view.setUser(question.getUser());
 		view.setUserName(userName(question.getUser()));
 		view.setAnswers(buildAnswers(question.getAnswers()));
 		return view;
+	}
+
+	private String courseName(UUID course) {
+		Course byId = courseService.getById(course);
+		return byId.getNome();
 	}
 
 	private String userName(UUID user) {
